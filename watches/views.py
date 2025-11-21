@@ -1,8 +1,11 @@
-from rest_framework import viewsets, permissions
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied, ValidationError as DRFValidationError
 from rest_framework_mongoengine import viewsets as mongo_viewsets
-from .models import SmartWatch, WatchMetric, Alert
-from .serializers import SmartWatchSerializer, WatchMetricSerializer, AlertSerializer
+from .models import SmartWatch, WatchMetric, Alert, BPRecommendation
+from .serializers import SmartWatchSerializer, WatchMetricSerializer, AlertSerializer, BestBPSerializer, BPRecommendationSerializer
+from time import time
+from mongoengine.errors import NotUniqueError
 
 
 class IsOwner(permissions.BasePermission):
@@ -62,5 +65,44 @@ class AlertViewSet(mongo_viewsets.ReadOnlyModelViewSet):
         watch_ids = [watch.id for watch in user_watches]
         return Alert.objects(watch__in=watch_ids)
 
+class BestBPViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
 
-# Create your views here.
+    def list(self, request):
+        # compute-only, do NOT persist on GET
+        data = request.query_params if request.query_params else request.data
+        serializer = BestBPSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        age = serializer.validated_data["age"]
+        systolic, diastolic = BestBPSerializer.compute_bp(age)
+        return Response({
+            "age": age,
+            "recommended_systolic": systolic,
+            "recommended_diastolic": diastolic,
+            "recommended_bp": f"{systolic}/{diastolic}"
+        }, status=status.HTTP_200_OK)
+
+    def create(self, request):
+        # persist on POST
+        serializer = BestBPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        age = serializer.validated_data["age"]
+        systolic, diastolic = BestBPSerializer.compute_bp(age)
+
+        if BPRecommendation.objects(user=request.user).first():
+            raise DRFValidationError({"age": "A person can have only one age"})
+        rec = BPRecommendation(
+            user=request.user,
+            age=age,
+            systolic=systolic,
+            diastolic=diastolic,
+            recommended_bp=f"{systolic}/{diastolic}",
+            timestamp=int(time())
+        )
+        try:
+            rec.save()
+        except NotUniqueError:
+            # race-condition / DB-level uniqueness hit
+            raise DRFValidationError({"age": "A person can have only one age"})
+        out = BPRecommendationSerializer(rec, context={'request': request}).data
+        return Response(out, status=status.HTTP_201_CREATED)

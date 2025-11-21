@@ -109,3 +109,24 @@ class Alert(Document):
         dt = datetime.fromtimestamp(self.timestamp)
         return f"{self.watch.watch_id} - {self.alert_type} ({self.heart_rate} BPM) @ {dt.isoformat()}"
 
+class BPRecommendation(Document):
+    """Persist computed BP recommendations for auditing / history"""
+    user = ReferenceField('accounts.CustomUser', required=True, reverse_delete_rule=CASCADE,unique=True)
+    age = IntField(min_value=21, max_value=70, required=True)
+    systolic = IntField(min_value=0, required=True)
+    diastolic = IntField(min_value=0, required=True)
+    recommended_bp = StringField(max_length=32, required=True)
+    timestamp = LongField(required=True)  # epoch seconds
+
+    meta = {
+        'indexes': [
+            ('user', '-timestamp'),
+        ],
+        'ordering': ['-timestamp'],
+        'index_background': True,
+    }
+
+    def __str__(self):
+        dt = datetime.fromtimestamp(self.timestamp)
+        return f"BP {self.recommended_bp} for {self.user} @ {dt.isoformat()}"
+

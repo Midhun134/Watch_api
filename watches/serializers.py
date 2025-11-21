@@ -3,7 +3,7 @@ from rest_framework import serializers as drf_serializers
 from datetime import datetime
 from bson import ObjectId
 from bson.errors import InvalidId
-from .models import SmartWatch, WatchMetric, Alert
+from .models import SmartWatch, WatchMetric, Alert, BPRecommendation
 
 
 class SmartWatchSerializer(serializers.DocumentSerializer):
@@ -146,6 +146,34 @@ class AlertSerializer(serializers.DocumentSerializer):
         ret = super().to_representation(instance)
         if instance.watch:
             ret['watch'] = str(instance.watch.id)
+        return ret
+
+class BestBPSerializer(drf_serializers.Serializer):
+    """
+    Accepts an 'age' (21-70) and returns a recommended systolic/diastolic pair.
+    Simple formula: systolic increases ~0.5 mm per year from 110 at age 21,
+    diastolic increases ~0.1 mm per year from 70 at age 21.
+    """
+    age = drf_serializers.IntegerField(min_value=21, max_value=70)
+
+    @staticmethod
+    def compute_bp(age: int):
+        systolic = int(round(110 + (age - 21) * 0.5))
+        diastolic = int(round(70 + (age - 21) * 0.1))
+        return systolic, diastolic
+
+class BPRecommendationSerializer(serializers.DocumentSerializer):
+    user = drf_serializers.CharField(read_only=True)
+
+    class Meta:
+        model = BPRecommendation
+        fields = ["id", "user", "age", "systolic", "diastolic", "recommended_bp", "timestamp"]
+        read_only_fields = ["id", "user", "systolic", "diastolic", "recommended_bp", "timestamp"]
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if instance.user:
+            ret['user'] = str(instance.user.id)
         return ret
 
 
