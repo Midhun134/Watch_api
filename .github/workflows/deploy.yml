@@ -13,10 +13,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Authenticate with Google Cloud
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # Install and configure gcloud CLI
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Configure GCloud
@@ -24,13 +30,13 @@ jobs:
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/zone ${{ secrets.GCP_ZONE }}
 
-      - name: Copy files to GCP VM using gcloud (no SSH login)
+      - name: Copy files to GCP VM
         run: |
           gcloud compute scp --recurse . \
             ${{ secrets.GCP_VM_NAME }}:/home/${{ secrets.GCP_VM_USER }}/app \
             --quiet
 
-      - name: Restart Application Service
+      - name: Restart Django Service
         run: |
           gcloud compute ssh ${{ secrets.GCP_VM_NAME }} --command \
           "sudo systemctl restart django.service"
