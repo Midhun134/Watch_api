@@ -3,6 +3,7 @@ from mongoengine import CASCADE
 from datetime import datetime
 
 
+#this is the data model for the watches app
 class SmartWatch(Document):
     # Store user ID as ObjectIdField since users are now in MongoDB
     owner = ReferenceField('accounts.CustomUser', required=True, reverse_delete_rule=CASCADE)

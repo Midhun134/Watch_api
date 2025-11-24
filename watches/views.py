@@ -7,7 +7,7 @@ from .serializers import SmartWatchSerializer, WatchMetricSerializer, AlertSeria
 from time import time
 from mongoengine.errors import NotUniqueError
 
-
+#this is the api logic for the watches app
 class IsOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if isinstance(obj, SmartWatch):
