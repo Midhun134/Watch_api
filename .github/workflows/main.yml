@@ -27,7 +27,7 @@ jobs:
       - name: Copy files to GCP VM using gcloud (no SSH login)
         run: |
           gcloud compute scp --recurse . \
-            ${{ secrets.GCP_VM_NAME }}:/home/${{ secrets.GCP_VM_USER }}/app \
+            ${{ secrets.GCP_VM_NAME }}:/home/midhun/Watch_api \
             --quiet
 
       - name: Restart Application Service
