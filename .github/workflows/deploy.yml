@@ -33,7 +33,7 @@ jobs:
       - name: Copy files to GCP VM
         run: |
           gcloud compute scp --recurse . \
-            ${{ secrets.GCP_VM_NAME }}:/home/${{ secrets.GCP_VM_USER }}/Watch_api \
+            ${{ secrets.GCP_VM_NAME }}:/home/midhun/Watch_api \
             --quiet
 
       - name: Restart Django Service
