@@ -1,4 +1,4 @@
-name: Deploy to GCP
+name: Deploy to GCP via SSH
 
 on:
   push:
@@ -8,35 +8,59 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
+    # Optional: Set a default shell for consistency
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Authenticate with Google Cloud
-      - name: Authenticate with GCP
-        uses: google-github-actions/auth@v2
+      # --- SSH Configuration ---
+      # This step sets up the private key needed for the SSH/SCP actions below.
+      # You MUST create a repository secret named 'SSH_PRIVATE_KEY'
+      # containing the private key for the user you use to SSH into the VM.
+      - name: Setup SSH Private Key
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      # Install and configure gcloud CLI
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+          ssh-private-key: ${{ secrets.GCP_SSH_KEY }}
+          
+      # --- File Copy (SCP) via SSH ---
+      # This uses an explicit SSH action to copy files.
+      # The 'source' is the current directory ('.').
+      # The 'target' is the VM IP/DNS and the destination path.
+      - name: Copy files to GCP VM via SCP
+        uses: appleboy/scp-action@v0.1.7
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Configure GCloud
-        run: |
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-          gcloud config set compute/zone ${{ secrets.GCP_ZONE }}
-
-      - name: Copy files to GCP VM
-        run: |
-          gcloud compute scp --recurse . \
-            ${{ secrets.GCP_VM_NAME }}:/home/midhun/Watch_api \
-            --quiet
-
-      - name: Restart Django Service
-        run: |
-          gcloud compute ssh ${{ secrets.GCP_VM_NAME }} --command \
-          "sudo systemctl restart django.service"
+          # Use the VM's Public IP or FQDN here
+          host: ${{ secrets.GCP_VM_IP }} 
+        
+          username: ${{ secrets.GCP_VM_USER }}
+          # The private key loaded in the previous step
+          key: ${{ secrets.GCP_SSH_KEY }} 
+          # The files/folders to copy
+          source: "." 
+          # The destination path on the VM
+          target: "/home/midhun/Watch_api" 
+          # Recursively copy all files
+          overwrite: true
+          
+      # --- Restart Service via SSH ---
+      # This uses an explicit SSH action to execute the restart command.
+      - name: Restart Django Service via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          # Use the VM's Public IP or FQDN here
+          host: ${{ secrets.GCP_VM_IP }}
+          # The username you use to SSH into the VM
+          username: ${{ secrets.GCP_VM_USER }}
+          # The private key loaded in the 'Setup SSH Private Key' step
+          key: ${{ secrets.GCP_SSH_KEY }}
+          # The commands to execute on the VM
+          script: |
+            # Navigate to the project directory if necessary for context
+            cd /home/midhun/Watch_api
+            # Restart the service (needs sudo, so the user must have sudo permission without password or use 'sudo -S' if required)
+            sudo systemctl restart django.service
