@@ -20,7 +20,7 @@ jobs:
       # --- 1. NEW: Load SSH Key into Agent ---
       # This replaces your custom 'Configure SSH Key and Agent' step
       - name: Start SSH Agent and Load Key
-        uses: webfactory/ssh-agent@v0.8.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           # This should contain the content of your working .pem file!
           ssh-private-key: ${{ secrets.GCP_SSH_KEY }}
