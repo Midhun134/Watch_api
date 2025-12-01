@@ -15,57 +15,38 @@ jobs:
 
     steps:
       - name: Checkout code
-        # We must keep this action to download your code from the repository
         uses: actions/checkout@v3
 
-      # --- 1. SSH Key Setup (Handles Passphrase) ---
-      # This step creates the SSH key file and loads it into the SSH agent.
-      - name: Configure SSH Key and Agent
+      # --- 1. NEW: Load SSH Key into Agent ---
+      # This replaces your custom 'Configure SSH Key and Agent' step
+      - name: Start SSH Agent and Load Key
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          # This should contain the content of your working .pem file!
+          ssh-private-key: ${{ secrets.GCP_SSH_KEY }}
+          # This handles the passphrase non-interactively and securely
+          ssh-key-passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
+
+      # --- 2. Add Host to known_hosts (Modified to work with new step) ---
+      - name: Add GCP VM to Known Hosts
         run: |
-          # Ensure the .ssh directory exists and has correct permissions
           mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          # Create the private key file on the runner.
-          echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
-          # Start the SSH Agent
-          eval $(ssh-agent -s)
-
-          # Add the key to the agent, providing the passphrase non-interactively.
-          # The -S <passphrase_file> option is used to read the passphrase.
-          # We are creating the passphrase file temporarily for security.
-          echo "${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}" > /tmp/key_passphrase.txt
-          ssh-add ~/.ssh/deploy_key < /tmp/key_passphrase.txt
-          rm /tmp/key_passphrase.txt
-          # --- TEMPORARY DEBUG STEP ---
-          echo "--- Debugging SSH Agent Status ---"
-          ssh-add -l
-          echo "-----------------------------------"
-          
-          # Add the GCP VM's public key to known_hosts to bypass confirmation
           ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
 
-      # --- 2. Copy Files via SCP ---
-      # Uses the standard scp command with the SSH configuration established above.
+      # --- 3. Copy Files via SCP (UNCHANGED) ---
       - name: Copy files to GCP VM via SCP
         run: |
-          # scp uses the key loaded into the agent automatically
-          # -r: recursive (for folders)
-          # -i: specify identity file (just in case the agent isn't picked up automatically, though the agent should handle it)
+          # Note: We can now remove the -i ~/.ssh/deploy_key option 
+          # because the agent is guaranteed to be working.
           scp -r \
-            -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             . \
-            ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
+            ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
 
-      # --- 3. Restart Django Service via SSH ---
-      # Uses the standard ssh command to execute the restart command remotely.
+      # --- 4. Restart Django Service via SSH (UNCHANGED) ---
       - name: Restart Django Service
         run: |
-          # ssh uses the key loaded into the agent automatically
-          ssh -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }} \
+          # Same reason as above, the agent handles the key
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }} \
             'sudo systemctl restart django.service'
