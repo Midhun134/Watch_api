@@ -1,4 +1,4 @@
-name: Deploy to GCP via SSH
+name: Deploy to GCP via Native SSH
 
 on:
   push:
@@ -7,17 +7,61 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # Use a Linux runner for SSH compatibility
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        shell: bash
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4  # Ensures ./your-script.sh is available
+      - name: Checkout code
+        # We must keep this action to download your code from the repository
+        uses: actions/checkout@v3
 
-      - name: Set up SSH key
+      # --- 1. SSH Key Setup (Handles Passphrase) ---
+      # This step creates the SSH key file and loads it into the SSH agent.
+      - name: Configure SSH Key and Agent
         run: |
+          # Ensure the .ssh directory exists and has correct permissions
           mkdir -p ~/.ssh
-          echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan 34.70.163.217 >> ~/.ssh/known_hosts
+          chmod 700 ~/.ssh
 
-      - name: Execute deployment script via SSH
-        run: ssh -i ~/.ssh/id_ed25519 midhun@34.70.163.217 'bash -s' < ./your-script.sh
+          # Create the private key file on the runner.
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          # Start the SSH Agent
+          eval $(ssh-agent -s)
+
+          # Add the key to the agent, providing the passphrase non-interactively.
+          # The -S <passphrase_file> option is used to read the passphrase.
+          # We are creating the passphrase file temporarily for security.
+          echo "${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}" > /tmp/key_passphrase.txt
+          ssh-add ~/.ssh/deploy_key < /tmp/key_passphrase.txt
+          rm /tmp/key_passphrase.txt
+          
+          # Add the GCP VM's public key to known_hosts to bypass confirmation
+          ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
+
+      # --- 2. Copy Files via SCP ---
+      # Uses the standard scp command with the SSH configuration established above.
+      - name: Copy files to GCP VM via SCP
+        run: |
+          # scp uses the key loaded into the agent automatically
+          # -r: recursive (for folders)
+          # -i: specify identity file (just in case the agent isn't picked up automatically, though the agent should handle it)
+          scp -r \
+            -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            . \
+            ${{ secrets.GCP_SSH_USERNAME }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
+
+      # --- 3. Restart Django Service via SSH ---
+      # Uses the standard ssh command to execute the restart command remotely.
+      - name: Restart Django Service
+        run: |
+          # ssh uses the key loaded into the agent automatically
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.GCP_SSH_USERNAME }}@${{ secrets.GCP_VM_IP }} \
+            'sudo systemctl restart django.service'
