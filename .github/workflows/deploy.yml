@@ -39,6 +39,10 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}" > /tmp/key_passphrase.txt
           ssh-add ~/.ssh/deploy_key < /tmp/key_passphrase.txt
           rm /tmp/key_passphrase.txt
+          # --- TEMPORARY DEBUG STEP ---
+          echo "--- Debugging SSH Agent Status ---"
+          ssh-add -l
+          echo "-----------------------------------"
           
           # Add the GCP VM's public key to known_hosts to bypass confirmation
           ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
