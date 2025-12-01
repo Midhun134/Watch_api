@@ -26,6 +26,7 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.GCP_SSH_KEY }}
+          ssh-agent-passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           
       # --- File Copy (SCP) via SSH ---
       # This uses an explicit SSH action to copy files.
