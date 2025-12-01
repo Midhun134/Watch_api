@@ -9,43 +9,35 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     
-    defaults:
-      run:
-        shell: bash
+    # ... (defaults, checkout remain the same) ...
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # --- 1. NEW: Load Encrypted SSH Key into Agent ---
-      # Use the shimataro action which supports the passphrase input
-      - name: Load Encrypted SSH Key
+      # --- 1. Load Encrypted SSH Key and Set Known Hosts (CRITICAL FIX) ---
+      - name: Load Encrypted SSH Key and Set Known Hosts
         uses: shimataro/ssh-key-action@v2 
         with:
-          # This contains the content of your working .pem file!
+          # Key content (Confirmed to be the correct PEM content)
           key: ${{ secrets.GCP_SSH_KEY }}
-          # This input securely supplies the passphrase to ssh-add
+          
+          # Passphrase input (Required for your encrypted key)
           passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
           
-      # --- 2. Add Host to known_hosts ---
-      - name: Add GCP VM to Known Hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
-
-      # --- 3. Copy Files via SCP ---
+          # CRITICAL FIX: Explicitly providing the known_hosts entry
+          known_hosts: |
+            34.70.163.217 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzfm+JA5oBhn01h5HuliKORFQci6Zd2JLZR9WaAGwfHt3Uaoe1lHSAeENiGx+gmBkg11wBVHfc5dy10EY1mfLUsp+jjTTKoy+15G7LGDZB0mRn6L/VS/K5AJQ5bXteWlzG6fQL502vZvqj9ATCVYF2Q9V+W1XjxN6G+AUrZZWFeBHx9aiaOwE/Wn7hUzjmboNf9pECBiLTkGqA7cxLzqQj61lzvFJw9GVXuy0PBjdmrtdUW54KMsniahXFdG2cvfP9TtOHeGsIAVTbVkU2m8G2uKKpBBwFqOZphDEiIOzI3tVkNoF2xQVLBUSCaHMlxzdaci809V0AaRb1Rzrurf90EZYsVdTRo3JXsDQPkXnlZU2sn/8kS6a0yNqWnGaa/J7i3H7Ws91JQVbgSLRmmQUTZCtgsQcfUVHEn/LIQtuKwSHKUeI4ALsNhmY1C9/OqnUohp+sHCBk8vD60V4dOWUZDFdHP5CQAASiuMFErvfNpYQRnCeiRUhs3isVdAQhTPM=
+            
+      # --- 2. Copy Files via SCP (Simplified) ---
       - name: Copy files to GCP VM via SCP
         run: |
-          # The key is now loaded by the action. We can remove the -i option.
           scp -r \
-            -o StrictHostKeyChecking=no \
             . \
             ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
 
-      # --- 4. Restart Django Service via SSH ---
+      # --- 3. Restart Django Service via SSH (Simplified) ---
       - name: Restart Django Service
         run: |
-          # The agent handles the key
-          ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }} \
+          ssh ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }} \
             'sudo systemctl restart django.service'
