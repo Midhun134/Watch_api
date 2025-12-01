@@ -54,7 +54,7 @@ jobs:
             -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             . \
-            ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
 
       # --- 3. Restart Django Service via SSH ---
       # Uses the standard ssh command to execute the restart command remotely.
@@ -63,5 +63,5 @@ jobs:
           # ssh uses the key loaded into the agent automatically
           ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
-            ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }} \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }} \
             'sudo systemctl restart django.service'
