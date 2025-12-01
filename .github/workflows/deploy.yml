@@ -23,7 +23,7 @@ jobs:
       # You MUST create a repository secret named 'SSH_PRIVATE_KEY'
       # containing the private key for the user you use to SSH into the VM.
       - name: Setup SSH Private Key
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.GCP_SSH_KEY }}
           ssh-agent-passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
