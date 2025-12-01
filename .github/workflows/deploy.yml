@@ -17,36 +17,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # --- 1. NEW: Load SSH Key into Agent ---
-      # This replaces your custom 'Configure SSH Key and Agent' step
-      - name: Start SSH Agent and Load Key
-        uses: webfactory/ssh-agent@v0.9.1
+      # --- 1. NEW: Load Encrypted SSH Key into Agent ---
+      # Use the shimataro action which supports the passphrase input
+      - name: Load Encrypted SSH Key
+        uses: shimataro/ssh-key-action@v2 
         with:
-          # This should contain the content of your working .pem file!
-          ssh-private-key: ${{ secrets.GCP_SSH_KEY }}
-          # This handles the passphrase non-interactively and securely
-          ssh-key-passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
-
-      # --- 2. Add Host to known_hosts (Modified to work with new step) ---
+          # This contains the content of your working .pem file!
+          key: ${{ secrets.GCP_SSH_KEY }}
+          # This input securely supplies the passphrase to ssh-add
+          passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
+          
+      # --- 2. Add Host to known_hosts ---
       - name: Add GCP VM to Known Hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
 
-      # --- 3. Copy Files via SCP (UNCHANGED) ---
+      # --- 3. Copy Files via SCP ---
       - name: Copy files to GCP VM via SCP
         run: |
-          # Note: We can now remove the -i ~/.ssh/deploy_key option 
-          # because the agent is guaranteed to be working.
+          # The key is now loaded by the action. We can remove the -i option.
           scp -r \
             -o StrictHostKeyChecking=no \
             . \
             ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
 
-      # --- 4. Restart Django Service via SSH (UNCHANGED) ---
+      # --- 4. Restart Django Service via SSH ---
       - name: Restart Django Service
         run: |
-          # Same reason as above, the agent handles the key
+          # The agent handles the key
           ssh -o StrictHostKeyChecking=no \
             ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }} \
             'sudo systemctl restart django.service'
