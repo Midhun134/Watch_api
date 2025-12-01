@@ -7,61 +7,17 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    
-    # Optional: Set a default shell for consistency
-    defaults:
-      run:
-        shell: bash
-
+    runs-on: ubuntu-latest  # Use a Linux runner for SSH compatibility
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4  # Ensures ./your-script.sh is available
 
-      # --- SSH Configuration ---
-      # This step sets up the private key needed for the SSH/SCP actions below.
-      # You MUST create a repository secret named 'SSH_PRIVATE_KEY'
-      # containing the private key for the user you use to SSH into the VM.
-      - name: Setup SSH Private Key
-        uses: webfactory/ssh-agent@main
-        with:
-          ssh-private-key: ${{ secrets.GCP_SSH_KEY }}
-          ssh-agent-passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
-          
-      # --- File Copy (SCP) via SSH ---
-      # This uses an explicit SSH action to copy files.
-      # The 'source' is the current directory ('.').
-      # The 'target' is the VM IP/DNS and the destination path.
-      - name: Copy files to GCP VM via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          # Use the VM's Public IP or FQDN here
-          host: ${{ secrets.GCP_VM_IP }} 
-        
-          username: ${{ secrets.GCP_VM_USER }}
-          # The private key loaded in the previous step
-          key: ${{ secrets.GCP_SSH_KEY }} 
-          # The files/folders to copy
-          source: "." 
-          # The destination path on the VM
-          target: "/home/midhun/Watch_api" 
-          # Recursively copy all files
-          overwrite: true
-          
-      # --- Restart Service via SSH ---
-      # This uses an explicit SSH action to execute the restart command.
-      - name: Restart Django Service via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          # Use the VM's Public IP or FQDN here
-          host: ${{ secrets.GCP_VM_IP }}
-          # The username you use to SSH into the VM
-          username: ${{ secrets.GCP_VM_USER }}
-          # The private key loaded in the 'Setup SSH Private Key' step
-          key: ${{ secrets.GCP_SSH_KEY }}
-          # The commands to execute on the VM
-          script: |
-            # Navigate to the project directory if necessary for context
-            cd /home/midhun/Watch_api
-            # Restart the service (needs sudo, so the user must have sudo permission without password or use 'sudo -S' if required)
-            sudo systemctl restart django.service
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan 34.70.163.217 >> ~/.ssh/known_hosts
+
+      - name: Execute deployment script via SSH
+        run: ssh -i ~/.ssh/id_ed25519 midhun@34.70.163.217 'bash -s' < ./your-script.sh
