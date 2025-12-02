@@ -12,23 +12,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         
-      # --- 1. Load SSH Key and Set Known Hosts ---
-      - name: Load SSH Key and Set Known Hosts
-        uses: shimataro/ssh-key-action@v2 
-        with:
-          key: ${{ secrets.GCP_SSH_KEY }}
-          known_hosts: |
-            34.70.163.217 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzfm+JA5oBhn01h5HuliKORFQci6Zd2JLZR9WaAGwfHt3Uaoe1lHSAeENiGx+gmBkg11wBVHfc5dy10EY1mfLUsp+jjTTKoy+15G7LGDZB0mRn6L/VS/K5AJQ5bXteWlzG6fQL502vZvqj9ATCVYF2Q9V+W1XjxN6G+AUrZZWFeBHx9aiaOwE/Wn7hUzjmboNf9pECBiLTkGqA7cxLzqQj61lzvFJw9GVXuy0PBjdmrtdUW54KMsniahXFdG2cvfP9TtOHeGsIAVTbVkU2m8G2uKKpBBwFqOZphDEiIOzI3tVkNoF2xQVLBUSCaHMlxzdaci809V0AaRb1Rzrurf90EZYsVdTRo3JXsDQPkXnlZU2sn/8kS6a0yNqWnGaa/J7i3H7Ws91JQVbgSLRmmQUTZCtgsQcfUVHEn/LIQtuKwSHKUeI4ALsNhmY1C9/OqnUohp+sHCBk8vD60V4dOWUZDFdHP5CQAASiuMFErvfNpYQRnCeiRUhs3isVdAQhTPM=
+      # --- 1. Decrypt SSH Key (One-Time Setup) ---
+      - name: Setup Decrypted SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          
+          # Write encrypted key to file
+          echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/deploy_key_encrypted
+          chmod 600 ~/.ssh/deploy_key_encrypted
+          
+          # Decrypt using OpenSSL (more reliable than ssh-add with passphrase)
+          openssl rsa \
+            -in ~/.ssh/deploy_key_encrypted \
+            -out ~/.ssh/deploy_key \
+            -passin pass:"${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}"
+          chmod 600 ~/.ssh/deploy_key
+          
+          # Add known hosts
+          ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
           
       # --- 2. Copy Files via SCP ---
       - name: Copy files to GCP VM via SCP
         run: |
-          scp -o StrictHostKeyChecking=no -r . \
-            ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }}:/home/${{ secrets.GCP_VM_USER }}/Watch_api
+          scp -r -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            . \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
             
       # --- 3. Restart Django Service via SSH ---
       - name: Restart Django Service
         run: |
-          ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_IP }} \
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }} \
             'sudo systemctl restart django.service'
