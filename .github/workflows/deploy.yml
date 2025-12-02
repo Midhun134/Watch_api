@@ -21,10 +21,23 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
           
-      # --- 2. Copy Files via SCP ---
-      - name: Copy files to GCP VM via SCP
+      # --- 2. Sync Files via rsync ---
+      - name: Sync files to GCP VM via rsync
         run: |
-          scp -r -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no . ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '__pycache__' \
+            --exclude '*.pyc' \
+            --exclude 'venv' \
+            --exclude 'env' \
+            --exclude '.env' \
+            --exclude 'node_modules' \
+            --exclude '.vscode' \
+            --exclude '.idea' \
+            . \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api/
             
       # --- 3. Restart Django Service via SSH ---
       - name: Restart Django Service
