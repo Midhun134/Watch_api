@@ -15,31 +15,18 @@ jobs:
       # --- 1. Setup SSH Key ---
       - name: Setup SSH Key
         run: |
-          # Create SSH directory
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          
-          # Write private key to file
           echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          
-          
-          
-          # Add known hosts
           ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
           
       # --- 2. Copy Files via SCP ---
       - name: Copy files to GCP VM via SCP
         run: |
-          scp -r -i ~/.ssh/deploy_key \ 
-              -o StrictHostKeyChecking=no \
-              . \
-            ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
+          scp -r -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no . ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }}:/home/midhun/Watch_api
             
       # --- 3. Restart Django Service via SSH ---
       - name: Restart Django Service
         run: |
-          ssh -i ~/.ssh/deploy_key \ 
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }} \
-            'sudo systemctl restart django.service'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.GCP_VM_IP }} 'sudo systemctl restart django.service'
