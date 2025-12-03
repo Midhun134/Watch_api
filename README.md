@@ -12,5 +12,5 @@ sudo systemctl daemon-reload
 sudo systemctl enable django.service
 #Start the service
 sudo systemctl start django.service
-the github workflow finally ran successfully but there was one problem the api call was giving 400 bad requests so i tried running gunicorn using the port 8000 but it says the port is already in use and i checked it using systemctl status and there were 3 workers running and the reason the api call was not pinging is because in the settings.py the allowed hosts were empty so i put * inside the allowed hosts list to allow all which is not recommended for security and then restarted the server using sudo systemctl restart django.service and now everything works properly!!
+the github workflow finally ran successfully but there was one problem the api call was giving 400 bad requests so i tried running gunicorn using the port 8000 but it says the port is already in use and i checked it using systemctl status and there were 3 workers running and the reason the api call was not pinging is because in the settings.py the allowed hosts were empty so i put * inside the allowed hosts list to allow all which is not recommended for security and then restarted the server using sudo systemctl restart django.service and now everything works properly!!!!!
 
