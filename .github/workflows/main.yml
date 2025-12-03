@@ -64,4 +64,4 @@ jobs:
             # Navigate to the project directory if necessary for context
             cd /home/midhun/Watch_api
             # Restart the service (needs sudo, so the user must have sudo permission without password or use 'sudo -S' if required)
-            sudo systemctl restart django.service
+            sudo systemctl reload django.service
