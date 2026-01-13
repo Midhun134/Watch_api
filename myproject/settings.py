@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-_k#l!m7))w2di#co5e81ou%@g!^1@s3t%d)df1_-frpnf06c@7"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -70,8 +70,8 @@ SIMPLE_JWT = {
 
 # MongoDB (Atlas) via mongoengine
 # Configure MongoDB Atlas connection using mongoengine
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://midhunmukundank_db_user:M88f2S59mGJs9PC7@clustermidhun.utitwvh.mongodb.net/watch_api?appName=Clustermidhun")
-MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "watch_api")
+# MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://midhunmukundank_db_user:M88f2S59mGJs9PC7@clustermidhun.utitwvh.mongodb.net/watch_api?appName=Clustermidhun")
+# MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "watch_api")
 
 # django_mongoengine requires MONGODB_DATABASES setting
 MONGODB_DATABASES = {
