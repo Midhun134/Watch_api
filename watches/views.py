@@ -66,9 +66,23 @@ class AlertViewSet(mongo_viewsets.ReadOnlyModelViewSet):
         return Alert.objects(watch__in=watch_ids)
 
 class BestBPViewSet(viewsets.ViewSet):
-    permission_classes = [permissions.IsAuthenticated, IsOwner]
+    permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request):
+        # If no age parameter, try to return user's existing BP recommendation
+        age_param = request.query_params.get('age') or request.data.get('age')
+        
+        if not age_param:
+            # Try to get user's existing BP recommendation
+            existing_bp = BPRecommendation.objects(user=request.user).first()
+            if existing_bp:
+                serializer = BPRecommendationSerializer(existing_bp, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "message": "No blood pressure recommendation found. Provide 'age' parameter to compute one."
+                }, status=status.HTTP_404_NOT_FOUND)
+        
         # compute-only, do NOT persist on GET
         data = request.query_params if request.query_params else request.data
         serializer = BestBPSerializer(data=data)

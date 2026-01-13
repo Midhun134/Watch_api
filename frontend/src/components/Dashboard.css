@@ -1,0 +1,410 @@
+.dashboard-container {
+  min-height: 100vh;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  background: white;
+  padding: 24px 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header h1 {
+  color: #333;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.logout-button {
+  padding: 10px 24px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.logout-button:hover {
+  background: #d32f2f;
+}
+
+.error-banner {
+  background: #fee;
+  color: #c33;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border: 1px solid #fcc;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px;
+  font-size: 18px;
+  color: white;
+}
+
+/* Alerts Section */
+.alerts-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.alerts-title {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.alerts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.alert-card {
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 5px solid;
+  transition: transform 0.2s;
+}
+
+.alert-card:hover {
+  transform: translateY(-2px);
+}
+
+.alert-card.high {
+  background: #ffebee;
+  border-color: #f44336;
+}
+
+.alert-card.low {
+  background: #e3f2fd;
+  border-color: #2196f3;
+}
+
+.alert-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.alert-card-header strong {
+  color: #333;
+  font-size: 16px;
+}
+
+.alert-type-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.alert-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alert-heart-rate {
+  font-size: 32px;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+.alert-timestamp {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.add-watch-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.add-metric-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.add-bp-btn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.action-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Watches Section */
+.watches-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.watches-section h2 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 24px;
+  font-weight: 700;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.watches-table-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.watch-table-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.watch-table-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.watch-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.watch-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.watch-id {
+  font-size: 14px;
+  opacity: 0.9;
+  font-family: monospace;
+}
+
+.watch-thresholds {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.watch-thresholds span {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.metrics-table-wrapper {
+  overflow-x: auto;
+}
+
+.metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.metrics-table thead {
+  background: #f5f5f5;
+}
+
+.metrics-table th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.metrics-table td {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #666;
+}
+
+.metrics-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.metrics-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.heart-rate-cell {
+  color: #e74c3c;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.timestamp-cell {
+  font-size: 13px;
+  color: #999;
+}
+
+.no-metrics {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+  background: #fafafa;
+}
+
+/* Blood Pressure Section */
+.bp-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.bp-section h2 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 24px;
+  font-weight: 700;
+}
+
+.bp-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 32px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.bp-value-large {
+  font-size: 64px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.bp-details {
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.bp-details p {
+  margin: 8px 0;
+}
+
+.bp-timestamp {
+  margin-top: 16px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.bp-empty {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.bp-empty p {
+  margin: 8px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 12px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    width: 100%;
+  }
+
+  .alerts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .watch-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .watch-thresholds {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .metrics-table {
+    font-size: 12px;
+  }
+
+  .metrics-table th,
+  .metrics-table td {
+    padding: 12px 8px;
+  }
+
+  .bp-value-large {
+    font-size: 48px;
+  }
+}
